@@ -1,0 +1,6 @@
+/client/node_modules/
+/build/
+/monparcours
+/data
+/prod.*
+/deploy

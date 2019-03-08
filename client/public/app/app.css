@@ -1,0 +1,388 @@
+  body{
+    font-family: sans-serif;
+  }
+  input[type="text"],textarea{
+    border: 1px gray solid;
+  }
+
+  button>i{
+    font-size: 1.8rem;
+  }
+
+  .foot{ text-align: center; margin-top: 50px; }
+  .foot dl dt,
+  .menu dl dt { display: inline-block; padding-right: 10px; }
+
+  .menu{}
+  .menu dl dt a{
+    font-weight: bolder;
+   }
+  .menu .icon{
+    font-size: 0rem;
+    display: none;
+    z-index: 100;
+    cursor: pointer;
+  }
+  @media (max-width: 40.0rem) {
+    .menu dl,
+    .menu .bg {
+      transition-duration: 100ms;
+      transition-property: right;
+    }
+    .menu.open{
+      height: 100%;
+      width: 220px;
+      z-index: 10;
+    }
+    .menu{
+      position: fixed;
+      top: 0;
+      right: 0;
+    }
+    .menu .bg {
+      position: absolute;
+      opacity: 0.8;
+      background-color: white;
+      top: 0;
+      right: -100%;
+      height: 100%;
+      width: 100%;
+      border-left: 1px grey solid;
+    }
+    .menu dl {
+      position: absolute;
+      top: 0;
+      right: -100%;
+      height: 100%;
+      padding: 10px;
+      padding-top: 45px;
+      padding-right: 25px;
+      opacity: 0;
+    }
+    .menu.open .bg,
+    .menu.open dl{
+      opacity: 1;
+      right: 0;
+    }
+    .menu dl dt { display: none; }
+    .menu.open dl dt { display: block; padding-right: 0px; }
+    .menu .icon{
+      font-size: 2.5rem;
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: block;
+    }
+  }
+
+  .error{
+    border: 1px red solid !important;
+  }
+  a{
+    text-decoration: underline;
+  }
+  a.hl{
+    text-decoration: underline;
+  }
+  #head a.hl{
+    color: #606c76;
+  }
+
+
+  .steps{
+    padding-bottom: 20px;
+  }
+  .steps > div{
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px transparent solid;
+  }
+  .steps div.hl{
+    border: 1px gray solid;
+  }
+  .steps div h5{
+    text-transform: capitalize;
+    border-bottom: 1px lightgrey solid;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 0;
+  }
+  .steps div.hl h5{
+    text-decoration: underline;
+  }
+  .steps.hl div.hide{
+    display: none;
+  }
+  .steps .rm-step{
+    background-color: #606c76;
+    border-color: #606c76;
+  }
+
+  .latlng span{
+    padding-right: 0.5rem;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+  .leftpanel-container{
+    padding:5px;
+  }
+  .leftpanel-container h3 span{
+  }
+
+  .time-cpnt{
+    padding: .6rem 1rem;
+  }
+  .time-cpnt.readonly{
+    padding: 0;
+  }
+  .time-cpnt > select{
+    text-align: center;
+  }
+  .time-cpnt > select option{
+    text-align: center;
+  }
+  .time-cpnt > i,
+  .time-cpnt > span{
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .time-cpnt > select{
+    width: unset;
+  }
+  @media (min-width: 80.0rem) {
+    .time-cpnt > select{
+      width: 42%;
+    }
+    .time-cpnt > i{
+      width: 10%;
+    }
+    .time-cpnt > span{
+      width: 6%;
+    }
+  }
+
+  .cb-cpnt label{
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .cb-cpnt input{
+    vertical-align: middle;
+  }
+
+  div.time-cpnt.readonly>label{
+    display: inline;
+    padding-right: 0.5rem;
+  }
+
+  div.datetime-cpnt{
+    margin-bottom: 1.5rem;
+  }
+  div.datetime-cpnt.readonly>label{
+    display: inline;
+    padding-right: 0.5rem;
+  }
+
+  div.txt-cpnt.readonly>label{
+    display: inline;
+    padding-right: 0.5rem;
+  }
+  div.txt-cpnt.readonly>span{
+    white-space: pre-line;
+  }
+
+  .protest-cpnt{
+    position: relative;
+  }
+  .protest-cpnt .print-it{
+    position: absolute;
+    top: 30px;
+    right:0;
+    font-size:2.5rem;
+    cursor: pointer;
+  }
+  .protest-cpnt .print-it:hover{
+    color:green;
+  }
+
+  .protests-cpnt tr{
+    cursor: pointer;
+  }
+
+  .copy-cpnt{
+    position: relative;
+    cursor: pointer;
+  }
+  .copy-cpnt>input{
+    cursor: pointer;
+  }
+  .copy-cpnt>.content{
+    position: absolute;
+    top: 5px;
+    left: 6px;
+    z-index: 1;
+    background-color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 80%;
+    overflow: hidden;
+  }
+  .copy-cpnt>.extra{
+    position: absolute;
+    top: 0px;
+    right: 0;
+    height: 100%;
+    z-index: 0;
+    vertical-align: middle;
+  }
+  .copy-cpnt>.extra>span{
+    font-size: 2rem;
+    vertical-align: middle;
+    opacity: 1;
+  }
+  .copy-cpnt>.extra,
+  .copy-cpnt>.content,
+  .copy-cpnt>.extra>i{
+    transition-duration: 100ms;
+    transition-property: color, opacity;
+  }
+  .copy-cpnt.copied>.extra>i{
+    color:green;
+  }
+
+  @media (max-width: 40.0rem) {
+    .copy-cpnt>.extra>span{
+      opacity:0;
+    }
+    .copy-cpnt.copied>.content{
+      opacity:0;
+    }
+    .copy-cpnt.copied>.extra>span{
+      opacity:1;
+    }
+  }
+  .copy-cpnt>.extra>i{
+    font-size: 2.5rem;
+    vertical-align: middle;
+  }
+
+  .page-create .bt-save {
+    margin:20px 20px 20px 0;
+  }
+  .page-admin .bt-save,
+  .page-contact .bt-save,
+  .page-search .bt-save {
+    width: 100%;
+  }
+  .page-mines table tr td {
+    cursor: pointer;
+  }
+
+  /* Larger than mobile screen */
+  @media (min-width: 40.0rem) {
+    .map-container {
+      height: 450px;
+    }
+  }
+
+  /* Larger than tablet screen */
+  @media (min-width: 80.0rem) {
+    .map-container {
+      height: 600px;
+    }
+    .leftpanel{
+       height:100%;
+       width:350px;
+       position:absolute;
+       top:0;
+       right:0;
+       z-index:900;
+    }
+    .bkgw{
+      background-color:white;
+      opacity:0.8;
+      top:0;
+      left:0;
+      position:absolute;
+      height:100%;
+      width:100%;
+      z-index:-1;
+    }
+    .leftpanel-container{
+      overflow-y: scroll;
+      height:100%;
+    }
+  }
+
+  /* Larger than desktop screen */
+  @media (min-width: 120.0rem) {
+    .map-container {
+      height: 800px;
+    }
+  }
+
+  .contacts-cpnt td {
+    cursor: pointer;
+  }
+
+  .contact-cpnt div span {
+    font-weight:bolder;
+    padding-right: 10px;
+  }
+  .contact-cpnt div button {
+    vertical-align: middle;
+  }
+  .contact-cpnt div .bt-trash {
+    float: right;
+  }
+
+
+  body.print .protest-cpnt .print-it,
+  body.print .menu,
+  body.print .publicpath,
+  body.print .copy-cpnt,
+  body.print .cb-cpnt,
+  body.print #foot,
+  body.print #head{
+    display:none;
+  }
+  body.print{
+    padding-bottom: 50px;
+  }
+  body.print .map-container {
+    height: 400px;
+  }
+  body.print .leftpanel{
+     height:unset;
+     width:unset;
+     position:unset;
+     top:unset;
+     right:unset;
+     z-index:unset;
+  }
+  body.print .bkgw{
+    background-color:unset;
+    opacity:unset;
+    top:unset;
+    left:unset;
+    position:unset;
+    height:unset;
+    width:unset;
+    z-index:unset;
+  }
+  body.print .leftpanel-container{
+    overflow-y: unset;
+    height:unset;
+  }
+  body.print .time-cpnt > select{
+    width: unset;
+  }
+  body.print .time-cpnt > i{
+    width: unset;
+  }
+  body.print .time-cpnt > span{
+    width: unset;
+  }

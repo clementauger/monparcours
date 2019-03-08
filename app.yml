@@ -1,0 +1,69 @@
+development:
+  port: 8100
+  captchasolution: magic
+  adminkey: I am the boss!
+  adminsalt: so salty.
+  statik: false
+  pwdsalt: "what"
+  host: ""
+  canonicalhost: localhost
+
+test_mysql:
+  port: 8100
+  captchasolution: magic
+  adminkey: I am the boss!
+  adminsalt: so salty.
+  statik: true
+  host: monparcours.online
+  canonicalhost: monparcours.online
+  globalratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+  loginratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+
+test_pg:
+  port: 8100
+  captchasolution: magic
+  adminkey: I am the boss!
+  adminsalt: so salty.
+  statik: true
+  host: monparcours.online
+  canonicalhost: monparcours.online
+  globalratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+  loginratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+
+test_sqlite:
+  port: 8100
+  captchasolution: magic
+  adminkey: I am the boss!
+  adminsalt: so salty.
+  statik: true
+  host: monparcours.online
+  canonicalhost: monparcours.online
+  globalratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+  loginratelimit:
+    size: 65536
+    rpm: 2000
+    burst: 2000
+
+production:
+  port: 80
+  adminkey: I am the boss!
+  adminsalt: so salty.
+  statik: true
+  pwdsalt: "what what"
+  host: "{subdomain:(?:www.monparcours.online|monparcours.online)}"
+  canonicalhost: monparcours.online
