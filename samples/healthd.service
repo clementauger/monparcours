@@ -1,0 +1,13 @@
+[Unit]
+Description=healthd
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/home/monparcours/healthd
+Environment="HEALTHD_MONITORED_HOSTPORTS=127.0.0.1:5020"
+Environment="HEALTHD_SERVER_HOSTPORT=:5032"
+
+[Install]
+WantedBy=multi-user.target

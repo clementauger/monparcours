@@ -1,0 +1,9 @@
+sample_env:
+    dialect: sqlite3 | mysql | pgsql
+    datasource: the DSN
+    table: name of the migraiton table
+    schema: name of the database containing the migrations
+    connmaxlifetime: time.duration of connection maximum lifetime
+    maxidleconns: count of max idle connections
+    maxopenconns: count of maximum open connections
+    statik: true # to load files from embedded resources or not

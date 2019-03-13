@@ -1,0 +1,13 @@
+[Unit]
+Description=monparcours
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/home/monparcours/app/monparcours
+WorkingDirectory=/home/monparcours/app/
+Environment="GO_ENV=production"
+
+[Install]
+WantedBy=multi-user.target
