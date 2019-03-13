@@ -9,7 +9,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 )
 
-func Geocode(size int) func(w http.ResponseWriter, r *http.Request) {
+func Geocode(size int) func(w http.ResponseWriter, r *http.Request) error {
 	l, err := lru.New(size)
 	if err != nil {
 		log.Fatal(err)
@@ -17,7 +17,7 @@ func Geocode(size int) func(w http.ResponseWriter, r *http.Request) {
 	url, _ := url.Parse("https://nominatim.openstreetmap.org/")
 
 	proxy := httputil.NewSingleHostReverseProxy(url)
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) error {
 
 		rr, _ := http.NewRequest("GET", r.URL.String(), nil)
 		rr.URL.Path = "/search"
@@ -35,11 +35,12 @@ func Geocode(size int) func(w http.ResponseWriter, r *http.Request) {
 		v, ok := l.Get(key)
 		if ok {
 			w.Write(v.([]byte))
-			return
+			return nil
 		}
 		x := &resp{ResponseWriter: w}
 		proxy.ServeHTTP(x, rr)
 		l.Add(key, x.buf)
+		return nil
 	}
 }
 

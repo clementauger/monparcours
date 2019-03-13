@@ -1,4 +1,4 @@
-package dbconnect
+package db
 
 import (
 	"database/sql"
@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/clementauger/monparcours/server/config"
 	"gopkg.in/gorp.v1"
 
+	"github.com/clementauger/coders"
 	_ "github.com/go-sql-driver/mysql" // they are here,
 	_ "github.com/lib/pq"              // and maybe
 	_ "github.com/mattn/go-sqlite3"    // only here,
-	"github.com/rubenv/sql-migrate"    // deal with it.
+	// deal with it.
 )
 
 // Environment defines connection string and execution options related to the databaase.
@@ -53,7 +53,7 @@ var afterOpen = map[string]func(*sql.DB) error{
 
 func GetEnvironment(filename, environment string) (*Environment, error) {
 	conf := make(map[string]*Environment)
-	err := config.ReadConfig(conf, filename)
+	err := coders.Decode(conf, filename)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +72,17 @@ func GetEnvironment(filename, environment string) (*Environment, error) {
 	}
 	env.DataSource = os.ExpandEnv(env.DataSource)
 
-	if env.TableName != "" {
-		migrate.SetTable(env.TableName)
+	if env.ConnMaxLifetime == nil {
+		y := time.Hour
+		env.ConnMaxLifetime = &y
 	}
-
-	if env.SchemaName != "" {
-		migrate.SetSchema(env.SchemaName)
+	if env.MaxIdleConns == nil {
+		y := 10
+		env.MaxIdleConns = &y
+	}
+	if env.MaxOpenConns == nil {
+		y := 10
+		env.MaxOpenConns = &y
 	}
 
 	return env, nil

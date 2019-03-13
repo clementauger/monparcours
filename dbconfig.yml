@@ -1,3 +1,8 @@
+development:
+    dialect: sqlite3
+    datasource: data/monparcours.db
+    table: migrations
+
 test_sqlite:
     dialect: sqlite3
     datasource: data/monparcours.db
@@ -13,23 +18,6 @@ test_pg:
 test_mysql:
     dialect: mysql
     datasource: test:test@/monparcours?parseTime=true
-    table: migrations
-    statik: true
-
-development:
-    dialect: sqlite3
-    datasource: data/monparcours.db
-    table: migrations
-
-production:
-    dialect: sqlite3
-    datasource: data/monparcours.db
-    table: migrations
-    statik: true
-
-production:
-    dialect: postgres
-    datasource: dbname=monparcours user=test password=test sslmode=disable
     table: migrations
     statik: true
 

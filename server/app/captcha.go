@@ -35,13 +35,13 @@ func CaptchaValidator(magicSolution string) func(sl validator.StructLevel) {
 }
 
 //CaptchaNew starts a new captcha challenge.
-func (h HTTPApp) CaptchaNew(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) CaptchaNew(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	json.NewEncoder(w).Encode(map[string]string{
+	return json.NewEncoder(w).Encode(map[string]string{
 		"id": captcha.New(),
 	})
 }

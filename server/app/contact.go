@@ -16,23 +16,23 @@ type contactMessageInput struct {
 
 //CreateContactMessage decodes the body as a json request, validates the input data,
 // writes the database, then respond the written object.
-func (h HTTPApp) CreateContactMessage(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) CreateContactMessage(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input contactMessageInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.JSONDecode(r))).
 		Map(sth.Conform(input)).
 		Map(sth.Validate(input, h.Validator)).
 		Map(func(i contactMessageInput) (model.ContactMessage, error) {
-			return h.ContactMessageService.Insert(i.ContactMessage)
+			return h.Services.ContactMessage.Insert(i.ContactMessage)
 		}).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type listContactMessagesInput struct {
@@ -41,21 +41,21 @@ type listContactMessagesInput struct {
 }
 
 //ListContactMessages ...
-func (h HTTPApp) ListContactMessages(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) ListContactMessages(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input listContactMessagesInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.GetDecode(r))).
 		Map(func(input listContactMessagesInput) ([]model.ContactMessage, error) {
-			return h.ContactMessageService.GetAll()
+			return h.Services.ContactMessage.GetAll()
 		}).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type deleteContactMessagesInput struct {
@@ -63,23 +63,23 @@ type deleteContactMessagesInput struct {
 }
 
 //DeleteContactMessage ...
-func (h HTTPApp) DeleteContactMessage(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) DeleteContactMessage(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input deleteContactMessagesInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.MuxDecode(r))).
 		Map(func(input deleteContactMessagesInput) (bool, error) {
-			d, err := h.ContactMessageService.Get(input.ID)
+			d, err := h.Services.ContactMessage.Get(input.ID)
 			if err == nil {
-				err = h.ContactMessageService.Delete(d)
+				err = h.Services.ContactMessage.Delete(d)
 			}
 			return err == nil, err
 		}).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }

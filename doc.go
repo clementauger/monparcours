@@ -1,3 +1,5 @@
+//md
+/*
 # monparcours
 
 a small web application so anyone can setup his own protests walk.
@@ -177,6 +179,11 @@ $ tree -d -L 3
   main.go                              <--- main entry point
 ```
 
+
+*/
+
+//md
+/*
 # Licenses
 
 This app is released under `WTFPL`, but it consumes tons of dependencies that
@@ -185,3 +192,9 @@ are using more serious licenses.
 Don t ever remove the OSM license within the frontend, thank you.
 
 Support those projects if you can.
+
+*/
+
+package main
+
+// goreadme autogen 

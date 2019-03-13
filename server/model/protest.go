@@ -25,7 +25,7 @@ type Protest struct {
 type Step struct {
 	ID        int64     `json:"id"`
 	ProtestID int64     `json:"protest_id"`
-	Place     string    `json:"place" validate:"required,max=60" conform:"text"`
+	Place     string    `json:"place" validate:"required,max=200" conform:"text"`
 	Details   string    `json:"details" validate:"max=200" conform:"text"`
 	Lat       float64   `json:"lat" validate:"required,latitude"`
 	Lng       float64   `json:"lng" validate:"required,longitude"`

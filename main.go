@@ -14,8 +14,7 @@ import (
 	_ "expvar"
 	_ "net/http/pprof"
 
-	"github.com/clementauger/monparcours/server" // TODO: Replace with the absolute import path
-	// TODO: Replace with the absolute import path
+	"github.com/clementauger/monparcours/server"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"

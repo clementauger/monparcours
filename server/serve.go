@@ -2,122 +2,59 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"reflect"
 	"time"
 
 	myapp "github.com/clementauger/monparcours/server/app"
-	"github.com/clementauger/monparcours/server/dbconnect"
 	"github.com/clementauger/monparcours/server/env"
-	mysqlmodel "github.com/clementauger/monparcours/server/model/mysql"
-	// pgsqlmodel "github.com/clementauger/monparcours/server/model/pgsql"
+	"github.com/clementauger/monparcours/server/service"
 	"github.com/gobuffalo/packr"
-	validator "gopkg.in/go-playground/validator.v9"
+	"github.com/gocraft/health"
 
 	"github.com/dchest/captcha"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
-func Getkey(ctx context.Context) {
-	flag.Parse()
+// Save the stream as a global variable
+var stream = health.NewStream()
 
-	stage := env.Stage()
-
-	var appConfig myapp.Environment
-	{
-		env, err := myapp.GetEnvironment("app.yml", stage)
-		if err != nil {
-			log.Fatal(err)
-		}
-		appConfig = *env
-	}
-
-	fmt.Print(myapp.GetKey(appConfig))
-}
-
+//ServeHTTP application.
 func ServeHTTP(ctx context.Context) {
 	quiet := flag.Bool("quiet", false, "quiet")
 
 	flag.Parse()
 
+	{
+		sink := health.NewJsonPollingSink(time.Minute, time.Minute*20)
+		stream.AddSink(sink)
+		sink.StartServer("localhost:5020")
+	}
+
 	stage := env.Stage()
 
-	var db *sql.DB
-	var dialect string
-	{
-		env, err := dbconnect.GetEnvironment("dbconfig.yml", stage)
-		if err != nil {
-			log.Fatal(err)
-		}
-		conn, x, err := dbconnect.GetConnection(env)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer conn.Close()
-		db = conn
-		dialect = x
+	srvs := service.Service{}
+	if err := srvs.Init(stage); err != nil {
+		log.Fatal(err)
 	}
+	defer srvs.Close()
 
 	var app myapp.HTTPApp
-	var appConfig myapp.Environment
-	{
-		env, err := myapp.GetEnvironment("app.yml", stage)
-		if err != nil {
-			log.Fatal(err)
-		}
-		appConfig = *env
-		app, err = myapp.GetApp(env)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if err := app.Init(stage, &srvs); err != nil {
+		log.Fatal(err)
 	}
+	appConfig := app.Env
 
-	{
-		app.Validator = validator.New()
-		app.Validator.RegisterValidation("iffalse", func(f validator.FieldLevel) bool {
-			rv := f.Parent().Elem().FieldByName(f.Param())
-			if !rv.IsValid() {
-				log.Fatalf("field %q not found", f.Param())
-			}
-			if rv.Kind() == reflect.Ptr {
-				rv = rv.Elem()
-			}
-			if rv.Interface().(bool) {
-				return true
-			}
-			rs := f.Field()
-			if rs.Kind() == reflect.Ptr {
-				rs = rs.Elem()
-			}
-			s := rs.Interface().(string)
-			return s != ""
-		})
-		app.Validator.RegisterStructValidation(
-			myapp.CaptchaValidator(appConfig.CaptchaSolution),
-			myapp.CaptchaInput{},
-		)
+	r := &myapp.Router{
+		Stream:       stream,
+		Router:       mux.NewRouter(),
+		ErrorHandler: myapp.HandleHTTPError,
 	}
-
-	if dialect == "sqlite3" || dialect == "mysql" {
-		app.StepService = mysqlmodel.StepService{DB: db}
-		app.ProtestService = mysqlmodel.ProtestService{DB: db}
-		app.ContactMessageService = mysqlmodel.ContactMessageService{DB: db}
-		// } else if dialect == "postgres" {
-		// 	app.StepService = pgsqlmodel.StepService{DB: db}
-		// 	app.ProtestService = pgsqlmodel.ProtestService{DB: db}
-		// 	app.ContactMessageService = pgsqlmodel.ContactMessageService{DB: db}
-	} else {
-		panic(dialect)
-	}
-
-	r := mux.NewRouter()
 
 	if appConfig.Host != "" {
 		r = r.Host(appConfig.Host).Subrouter()
@@ -148,6 +85,8 @@ func ServeHTTP(ctx context.Context) {
 	protected.HandleFunc("/contacts/delete/{id}", app.DeleteContactMessage).Methods("POST")
 	protected.HandleFunc("/contacts/list", app.ListContactMessages).Methods("GET")
 
+	r.HandleFunc("/rgpd", app.RGPD).Methods("GET")
+
 	{
 		var fileSystem http.FileSystem = http.Dir("client/public")
 		if appConfig.Statik {
@@ -168,13 +107,13 @@ func ServeHTTP(ctx context.Context) {
 	var httpHandler http.Handler = r
 	httpHandler = handlers.ContentTypeHandler(httpHandler, "application/json", "multipart/form-data")
 	httpHandler = handlers.CORS()(httpHandler)
-	httpHandler = handlers.CanonicalHost(canonicalhost, 302)(httpHandler)
-	// httpHandler = handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(httpHandler)
+	if canonicalhost != "" {
+		httpHandler = handlers.CanonicalHost(canonicalhost, 302)(httpHandler)
+	}
 	httpHandler = myapp.RateLimiter(*appConfig.GlobalRateLimit)(httpHandler)
 
 	if *quiet == false {
-		httpHandler = handlers.LoggingHandler(os.Stdout, httpHandler)
-		// httpHandler = handlers.CombinedLoggingHandler(os.Stdout, httpHandler)
+		httpHandler = myapp.HTPPLog()(httpHandler)
 	}
 
 	log.Println("Stage is ", stage)
@@ -185,13 +124,15 @@ func ServeHTTP(ctx context.Context) {
 	log.Printf("Admin key: %s\n", myapp.GetKey(appConfig))
 
 	srv := &http.Server{
-		Addr:    fmt.Sprint(":", appConfig.Port),
-		Handler: httpHandler,
+		Addr:         fmt.Sprint(":", appConfig.Port),
+		Handler:      httpHandler,
+		ReadTimeout:  *appConfig.ReadTimeout,
+		WriteTimeout: *appConfig.WriteTimeut,
 	}
 
 	err := safeStart(srv.ListenAndServe)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed to start http server", err)
 	}
 
 	onSignal(os.Interrupt, func() {

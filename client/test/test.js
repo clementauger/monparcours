@@ -7,48 +7,51 @@ const key = process.env.AKEY;
 
 var nm = function(){
   return Nightmare({
-    show: true,
-    typeInterval: 50,
-    openDevTools: true
+    show: !true,
+    openDevTools: !true,
+    webPreferences: {
+        images: false
+    },
+    typeInterval: 25
   })
 }
 
-// describe('test monparcours navigation', () => {
-//   it('should navigate using menu', function(done) {
-//     this.timeout('10s')
-//
-//     var nightmare = nm()
-//     nightmare
-//       .goto('http://localhost:8100')
-//       .wait(".menu dl dt a")
-//       .wait(".foot dl dt a")
-//       .wait(".menu dl dt a.hl")
-//       .click(".foot dl dt:nth-child(1) a")
-//       .wait(".foot dl dt a.hl")
-//       .evaluate(() => location.hash)
-//       .end()
-//       .then(hash => {
-//         expect(hash).to.equal('#!/contact')
-//         done()
-//       })
-//   })
-//   it('should navigate using menu', function(done) {
-//     this.timeout('10s')
-//
-//     var nightmare = nm()
-//     nightmare
-//       .goto('http://localhost:8100')
-//       .wait(".menu dl dt a.hl")
-//       .click(".menu dl dt:nth-child(1) a")
-//       .wait(".menu dl dt a.hl")
-//       .evaluate(() => location.hash)
-//       .end()
-//       .then(hash => {
-//         expect(hash).to.equal('#!/accueil')
-//         done()
-//       })
-//   })
-// })
+describe('test monparcours navigation', () => {
+  it('should navigate using menu', function(done) {
+    this.timeout('10s')
+
+    var nightmare = nm()
+    nightmare
+      .goto('http://localhost:8100')
+      .wait(".menu dl dt a")
+      .wait(".foot dl dt a")
+      .wait(".menu dl dt a.hl")
+      .click(".foot dl dt:nth-child(1) a")
+      .wait(".foot dl dt a.hl")
+      .evaluate(() => location.hash)
+      .end()
+      .then(hash => {
+        expect(hash).to.equal('#!/contact')
+        done()
+      }).catch(console.log)
+  })
+  it('should navigate using menu', function(done) {
+    this.timeout('10s')
+
+    var nightmare = nm()
+    nightmare
+      .goto('http://localhost:8100')
+      .wait(".menu dl dt a.hl")
+      .click(".menu dl dt:nth-child(1) a")
+      .wait(".menu dl dt a.hl")
+      .evaluate(() => location.hash)
+      .end()
+      .then(hash => {
+        expect(hash).to.equal('#!/accueil')
+        done()
+      }).catch(console.log)
+  })
+})
 
 
 function gotoCreatePage(nightmare){
@@ -57,10 +60,11 @@ function gotoCreatePage(nightmare){
     .wait(".menu dl dt a")
     .wait(".foot dl dt a")
     .wait(".menu dl dt a.hl")
-    .click(".menu dl dt:nth-child(2) a")
+    .click(".menu dl dt a[href='#!/creer']")
 }
 function fillCreateForm(nightmare){
   return nightmare
+    .wait(500)
     .type(".page-create input[name='title']", "titre")
     .type(".page-create input[name='organizer']", "organizer")
     .click(".page-create .bt-calendar")
@@ -68,6 +72,7 @@ function fillCreateForm(nightmare){
     .type(".page-create input[name='protest']", "protest")
     .type(".page-create textarea[name='description']", "description")
     .click(".page-create .map-container .leaflet-tile-container")
+    .wait(500)
     .type(".page-create .step:nth-child(1) input[name='place']", "place")
     .select(".page-create .step:nth-child(1) .time-cpnt .hours", "5")
     .select(".page-create .step:nth-child(1) .time-cpnt .minutes", "30")
@@ -86,7 +91,7 @@ describe('test monparcours create', () => {
       .then(hash => {
         expect(hash).to.equal('#!/creer')
         done()
-      })
+      }).catch(console.log)
   })
 
   it('should display the create page with a disabled button at startup', function(done) {
@@ -100,7 +105,7 @@ describe('test monparcours create', () => {
       .then((r) => {
         expect(r).to.equal(true)
         done()
-      })
+      }).catch(console.log)
   })
 
   it('should enable the create page once a location exists', function(done) {
@@ -116,7 +121,7 @@ describe('test monparcours create', () => {
       .then((r) => {
         expect(r).to.equal(false)
         done()
-      })
+      }).catch(console.log)
   })
 
   it('should return error if the form is incomplete', function(done) {
@@ -125,6 +130,7 @@ describe('test monparcours create', () => {
     var nightmare = nm()
     gotoCreatePage(nightmare)
       .wait(".page-create .bt-save")
+      .wait(".page-create .map-container .leaflet-tile-container")
       .click(".page-create .map-container .leaflet-tile-container")
       .click(".page-create .bt-save")
       .wait(".page-create input.error")
@@ -133,7 +139,7 @@ describe('test monparcours create', () => {
       .then((r) => {
         expect(r).to.equal(true)
         done()
-      })
+      }).catch(console.log)
   })
 
   it('should save the protest', function(done) {
@@ -150,7 +156,7 @@ describe('test monparcours create', () => {
       .then((r) => {
         expect(r).to.have.string('/voir/');
         done()
-      })
+      }).catch(console.log)
   })
 
   it('should set the copy content value', function(done) {
@@ -314,7 +320,7 @@ describe('test monparcours create', () => {
       })
   })
 
-  it('should set the step place', function(done) {
+  it('should set the step details', function(done) {
     this.timeout('10s')
 
     var nightmare = nm()

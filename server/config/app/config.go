@@ -3,8 +3,9 @@ package app
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
-	"github.com/clementauger/monparcours/server/config"
+	"github.com/clementauger/coders"
 )
 
 //Environment defines the execution options.
@@ -13,6 +14,10 @@ type Environment struct {
 	CanonicalHost string `yaml:"canonicalhost"`
 	// Port listened by the server.
 	Port int `yaml:"port"`
+	// ReadTimeut of http incoming request.
+	ReadTimeout *time.Duration `yaml:"readtimeout"`
+	// WriteTimeut of http outgoing request.
+	WriteTimeut *time.Duration `yaml:"writetimeout"`
 	//CsrfKey to protext the tokens (default 32 bytes random string)
 	CsrfKey string `yaml:"csrf"`
 	//AdminKey to generate an admin password (default 32 bytes random string)
@@ -33,7 +38,7 @@ type Environment struct {
 	//LoginRateLimit applies to the admin login.
 	LoginRateLimit *RateLimit `yaml:"loginratelimit"`
 	//GeoCoderCacheSize defines the length of the LRU cache of osm requests.
-	GeoCoderCacheSize int `yaml:"geocodercacheSize"`
+	GeoCoderCacheSize int `yaml:"geocodercachesize"`
 }
 
 //RateLimit configures http rate limiter.
@@ -46,7 +51,7 @@ type RateLimit struct {
 //GetEnvironment loads the config and applies default values.
 func GetEnvironment(filename, environment string) (*Environment, error) {
 	conf := make(map[string]*Environment)
-	err := config.ReadConfig(conf, filename)
+	err := coders.Decode(conf, filename)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +73,9 @@ func GetEnvironment(filename, environment string) (*Environment, error) {
 	if env.PwdSalt == "" {
 		env.PwdSalt = randStringRunes(32)
 	}
+	if env.GeoCoderCacheSize < 1 {
+		env.GeoCoderCacheSize = 1024
+	}
 
 	if env.GlobalRateLimit == nil {
 		env.GlobalRateLimit = &RateLimit{
@@ -83,14 +91,16 @@ func GetEnvironment(filename, environment string) (*Environment, error) {
 			RPM:   10,
 		}
 	}
+	if env.ReadTimeout == nil {
+		y := time.Second * 15
+		env.ReadTimeout = &y
+	}
+	if env.WriteTimeut == nil {
+		y := time.Second * 15
+		env.WriteTimeut = &y
+	}
 
 	return env, nil
-}
-
-//GetApp returns an http application to serve.
-func GetApp(env *Environment) (HTTPApp, error) {
-	app := HTTPApp{Env: *env}
-	return app, nil
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

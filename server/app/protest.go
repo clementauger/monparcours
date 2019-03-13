@@ -16,14 +16,13 @@ import (
 
 //CreateProtest decodes the body as a json request, validates the input data,
 // writes the database, then respond the written object.
-func (h HTTPApp) CreateProtest(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) CreateProtest(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	// w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input model.Protest
-
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.JSONDecode(r))).
 		Map(sth.Conform(input)).
 		Map(sth.Validate(input, h.Validator)).
@@ -35,12 +34,12 @@ func (h HTTPApp) CreateProtest(w http.ResponseWriter, r *http.Request) {
 			}
 			return m
 		}).
-		Map(h.ProtestService.Insert).
-		Map(h.StepService.InsertSteps).
+		Map(h.Services.Protest.Insert).
+		Map(h.Services.Step.InsertSteps).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type getProtestInput struct {
@@ -48,23 +47,23 @@ type getProtestInput struct {
 }
 
 //GetProtest by its ID.
-func (h HTTPApp) GetProtest(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) GetProtest(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	// w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input getProtestInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.MuxDecode(r))).
 		Map(func(input getProtestInput) (model.Protest, error) {
-			return h.ProtestService.Get(input.ID)
+			return h.Services.Protest.Get(input.ID)
 		}).
-		Map(h.StepService.GetSteps).
+		Map(h.Services.Step.GetSteps).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type getProtestPwdInput struct {
@@ -73,13 +72,13 @@ type getProtestPwdInput struct {
 }
 
 //GetProtestWithPassword by its ID and password.
-func (h HTTPApp) GetProtestWithPassword(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) GetProtestWithPassword(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input getProtestPwdInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.MuxDecode(r), sth.JSONDecode(r))).
 		Map(func(i getProtestPwdInput) getProtestPwdInput {
 			hasher := md5.New()
@@ -88,13 +87,13 @@ func (h HTTPApp) GetProtestWithPassword(w http.ResponseWriter, r *http.Request) 
 			return i
 		}).
 		Map(func(input getProtestPwdInput) (model.Protest, error) {
-			return h.ProtestService.GetWithPassword(input.ID, input.Password)
+			return h.Services.Protest.GetWithPassword(input.ID, input.Password)
 		}).
-		Map(h.StepService.GetProtectedSteps).
+		Map(h.Services.Step.GetProtectedSteps).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type getProtestsInput struct {
@@ -102,22 +101,22 @@ type getProtestsInput struct {
 }
 
 //GetProtests by their authorID.
-func (h HTTPApp) GetProtests(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) GetProtests(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input getProtestsInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.MuxDecode(r))).
 		Map(func(input getProtestsInput) ([]model.Protest, error) {
-			return h.ProtestService.GetByAuthorID(input.AuthorID)
+			return h.Services.Protest.GetByAuthorID(input.AuthorID)
 		}).
-		Map(st.Each(h.StepService.GetSteps)).
+		Map(st.Each(h.Services.Step.GetSteps)).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 type searchProtestInput struct {
@@ -131,45 +130,45 @@ type searchProtestInput struct {
 }
 
 //SearchProtests a location and a date.
-func (h HTTPApp) SearchProtests(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) SearchProtests(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input searchProtestInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.JSONDecode(r))).
 		Map(func(input searchProtestInput) ([]model.Protest, error) {
-			return h.ProtestService.SearchProtests(
+			return h.Services.Protest.SearchProtests(
 				input.Title, input.Protest, input.Organizer,
 				input.StartDate, input.EndDate,
 				input.AtLat, input.AtLng,
 				50.0,
 			)
 		}).
-		Map(st.Each(h.StepService.GetSteps)).
+		Map(st.Each(h.Services.Step.GetSteps)).
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }
 
 //ProtestInterest updates the protest interest count.
-func (h HTTPApp) ProtestInterest(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) ProtestInterest(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	var err error
-
-	HandleHTTPError(w, err)
+	// var err error
+	// HandleHTTPError(w, err)
+	return nil
 }
 
 //ProtestView updates the protest view count.
-func (h HTTPApp) ProtestView(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) ProtestView(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
-	var err error
-
-	HandleHTTPError(w, err)
+	// var err error
+	// HandleHTTPError(w, err)
+	return nil
 }

@@ -56,19 +56,23 @@ func (v ValidationError) Error() string {
 // if err is non nil, and the environement is not production, it responds with an StatusInternalServerError code,
 // otherwise it writes a dummy message with a response code StatusInternalServerError,
 // and writes the error to stderr.
-func HandleHTTPError(w http.ResponseWriter, err error) {
-	if err != nil {
-		if x, ok := err.(validator.ValidationErrors); ok {
-			http.Error(w, ValidationError{errs: x}.Error(), http.StatusBadRequest)
-		} else if _, ok := err.(UserError); ok {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		} else if !env.IsProd() {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		} else {
-			log.Println(err)
-			http.Error(w, "unrecoverable error", http.StatusInternalServerError)
-		}
-		return
+func HandleHTTPError(w http.ResponseWriter, err error) error {
+	if err == nil {
+		return nil
 	}
+	if x, ok := err.(validator.ValidationErrors); ok {
+		http.Error(w, ValidationError{errs: x}.Error(), http.StatusBadRequest)
+		return nil
+
+	} else if _, ok := err.(UserError); ok {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil
+
+	} else if !env.IsProd() {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	http.Error(w, "unrecoverable error", http.StatusInternalServerError)
+	return err
 }

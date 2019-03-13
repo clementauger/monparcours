@@ -1,0 +1,21 @@
+sample_env:
+    host: to serve, it can a regexp as defiend by the gorilla framework.
+    canonicalhost: for the website
+    port: to listen for for the website
+    readtimeout: duration before time out when reading requests
+    writetimeout: duration before time out when writing responses
+    csrf: to protext the tokens (default 32 bytes random string)
+    adminkey: to generate an admin password (default 32 bytes random string)
+    adminsalt: to generate an admin password (default 32 bytes random string)
+    captchasolution: for development and testing purposes.
+    pwdsalt: to hash user password.
+    geocodercachesize: size of the geocoder cache
+    statik: true # to load files from embedded resources or not
+    globalratelimit:
+      size: number of requests to remember
+      rpm: request per minutes allowed
+      burst: allowed burst if any
+    loginratelimit:
+      size: number of requests to remember
+      rpm: request per minutes allowed
+      burst: allowed burst if any

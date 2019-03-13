@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	appconf "github.com/clementauger/monparcours/server/config/app"
 	"github.com/clementauger/st"
 	sth "github.com/clementauger/st/http"
 	"github.com/gorilla/csrf"
@@ -13,7 +14,7 @@ import (
 
 type authHandler struct {
 	http.Handler
-	Env Environment
+	Env appconf.Environment
 }
 
 func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +30,14 @@ func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.Handler.ServeHTTP(w, r)
 }
 
-func Auth(env Environment) func(http.Handler) http.Handler {
+//Auth middleware to require logged user
+func Auth(env appconf.Environment) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return authHandler{Handler: h, Env: env}
 	}
 }
 
-func getToken(env Environment, d time.Duration) string {
+func getToken(env appconf.Environment, d time.Duration) string {
 	k := fmt.Sprintf("%v:%v:%v",
 		env.AdminKey, env.AdminSalt,
 		time.Now().Add(d).Format("2006-01-02"),
@@ -44,12 +46,12 @@ func getToken(env Environment, d time.Duration) string {
 	return k
 }
 
-func checkToken(env Environment, token string, d time.Duration) bool {
+func checkToken(env appconf.Environment, token string, d time.Duration) bool {
 	return token == getToken(env, d)
 }
 
 //GetKey for admin access.
-func GetKey(env Environment) string {
+func GetKey(env appconf.Environment) string {
 	k := fmt.Sprintf("%v:%v",
 		env.AdminKey, env.AdminSalt,
 	)
@@ -57,7 +59,7 @@ func GetKey(env Environment) string {
 	return k
 }
 
-func checkKey(env Environment, token string) bool {
+func checkKey(env appconf.Environment, token string) bool {
 	return token == GetKey(env)
 }
 
@@ -66,13 +68,13 @@ type adminLoginInput struct {
 }
 
 //AdminLogin attempts to resolve admin login challenge.
-func (h HTTPApp) AdminLogin(w http.ResponseWriter, r *http.Request) {
+func (h HTTPApp) AdminLogin(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 
 	var input adminLoginInput
 
-	err := st.
+	return st.
 		Map(sth.Decode(&input, sth.JSONDecode(r))).
 		Map(sth.Conform(input)).
 		Map(sth.Validate(input, h.Validator)).
@@ -93,5 +95,5 @@ func (h HTTPApp) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		Map(sth.JSONEncode(w)).
 		Sink()
 
-	HandleHTTPError(w, err)
+	// HandleHTTPError(w, err)
 }

@@ -105,7 +105,8 @@ function timeComponent() {
 
       var out = new Date();
       out.setHours(hours);
-      out.setMinutes(minutes);
+      out.setMinutes((parseInt(minutes/10)*10));
+      value.setMinutes((parseInt(minutes/10)*10));
 
       if(hours<10){hours="0"+hours;}
       if(minutes<10){minutes="0"+minutes;}
@@ -213,12 +214,12 @@ var Checkbox = function(){
   return {
     view: function(opts) {
       var attrs = opts.attrs || {};
-
       var divAttrs = {
         class: "cb-cpnt",
       }
       var labelAttrs = {
         for: attrs.id,
+        class: "",
       }
       var cbAttrs = {
         id: attrs.id,
@@ -243,18 +244,17 @@ var Checkbox = function(){
         cbAttrs.id = attrs.id;
         labelAttrs.for = attrs.id;
       }
+      if (attrs.readonly) {
+        labelAttrs.class += " readonly";
+      }
       cbAttrs.onclick = function(e) {
-        // attrs.checked = !attrs.checked;
-        if(attrs.bind){
-          attrs.bind.t[attrs.bind.p] = !cbAttrs.checked;
-        }
-        attrs.onclick && attrs.onclick(e, attrs.checked);
+        attrs.onclick && attrs.onclick(e, this.checked);
       }
       cbAttrs.onchange = function(e) {
         if(attrs.bind){
-          attrs.bind.t[attrs.bind.p] = !cbAttrs.checked;
+          attrs.bind.t[attrs.bind.p] = this.checked;
         }
-        attrs.onchange && attrs.onchange(e, attrs.checked);
+        attrs.onchange && attrs.onchange(e, this.checked);
       }
       return m("div",divAttrs,[
         !attrs.labelFirst?null:m("label",labelAttrs,attrs.placeholder),
@@ -266,7 +266,6 @@ var Checkbox = function(){
 }
 
 function txtF(model, prop, text, errP, opts){
-  var attrs = {};
   opts = opts || {};
   opts.placeholder = text;
   if (errP) {opts.error = errP(prop);}
@@ -274,7 +273,6 @@ function txtF(model, prop, text, errP, opts){
   return m(Text, opts)
 }
 function txtA(model, prop, text, errP, opts){
-  var attrs = {};
   opts = opts || {};
   opts.placeholder = text;
   if (errP) {opts.error = errP(prop);}
@@ -283,7 +281,6 @@ function txtA(model, prop, text, errP, opts){
   return m(Text, opts)
 }
 function dateF(model, prop, text, errP, opts){
-  var attrs = {};
   opts = opts || {};
   opts.placeholder = text;
   if (errP) {opts.error = errP(prop);}
@@ -291,11 +288,10 @@ function dateF(model, prop, text, errP, opts){
   return m(dateComponent, opts)
 }
 function cbF(model, prop, text, errP, opts){
-  var attrs = {};
   opts = opts || {};
   opts.placeholder = text;
   if (errP) {opts.error = errP(prop);}
-  opts.bind= {t: model, p: prop};
+  opts.bind = {t: model, p: prop};
   return m(Checkbox, opts)
 }
 
@@ -586,7 +582,7 @@ var ProtestComponent = function(){
           readOnly ? null :cbF(model, "public", cbText, protestError, {id:"publiccb", readonly:readOnly, labelFirst:true})
         ),
         readOnly ? null : m("div", {style:{display:model.public?"none":"block"}} ,
-          txtF(model, "password", "Mot de passe pour accéder à ce parcours", protestError, {}),
+          txtF(model, "password", "Mot de passe pour accéder à ce parcours", protestError, {})
         ),
         m("br")
       )
@@ -699,6 +695,7 @@ var MapComponent = function(opts){
 
       model.updateMarkers(mymap, dragend, readOnly);
       drawPath(model);
+      m.redraw();
     },
     onremove: function(vnode) {
       var attrs = vnode.attrs || {};
@@ -716,24 +713,25 @@ var StepsComponent = function(){
       var readOnly = attrs.readonly || false;
       var model = attrs.model || {};
       var errModel = attrs.errModel || {};
-      var stepsError = errorReader("protest.steps", errModel)
+      var stepsError = errorReader("protest.steps", errModel);
       var hasHL = model.hasHighLights();
+      var modelShowAll = {
+        checked: !hasHL,
+      }
       var stepsClass = "steps"
       if (hasHL) {
         stepsClass+=" hl"
       }
+      var cbClick = function(e, checked){
+        checked && model.unHighLightAll();
+      }
+      var cbShowAll = cbF(modelShowAll, "checked", "afficher toutes les étapes", null, {id:"show-steps", onclick:cbClick, labelFirst:true, readonly:!hasHL});
       return m("div", {class:"leftpanel"},
         m("div", {class:"bkgw"}, ""),
         m("div", {class:"leftpanel-container"},[
           m("h3", {}, "vos étapes", m("span", {}, "("+(model.wholeDistance().toFixed(2))+" km)")),
-          model.steps.length<2 ? null : m(Checkbox, {
-            placeholder:"afficher toutes les étapes",
-            checked:hasHL?"":"checked",
-            id:"show-steps",
-            onclick:function(e, checked){
-              checked && model.unHighLightAll();
-            }
-          }),
+          model.steps.length<2 ? null : cbShowAll,
+
           model.steps.length>0 ? null : m("div",{
             onclick:scrollTo(document.getElementById("geocoder")),
           }, m.trust("cliquez sur la <b>carte</b> ou utilisez le <b>geocoder</b> pour ajouter de nouveaux points de rendez vous.")),
@@ -757,8 +755,8 @@ var StepsComponent = function(){
                 }
               }},"étape n°"+(i+1)),
               m(timeComponent, {readonly:readOnly, placeholder:"Heure",  bind:{t:v, p:"gather_at"}, error:stepsError(i, "gather_at") }),
-              m(Text, {readonly:readOnly, placeholder:"lieu", bind:{t:v, p:"place"}, error:stepsError(i, "place") }),
-              m(Text, {readonly:readOnly, tagn:"textarea", placeholder:"details", bind:{t:v, p:"details"}, error:stepsError(i, "details") }),
+              m(Text, {readonly:readOnly, placeholder:"lieu", bind:{t:v, p:"place"}, error:stepsError(i, "place"), maxlength:190 }),
+              m(Text, {readonly:readOnly, tagn:"textarea", placeholder:"details", bind:{t:v, p:"details"}, error:stepsError(i, "details"), maxlength:190 }),
               i<1?null:m("div", {class:"dist"}, [
                 m("span",{}, (v.dist.toFixed(2))+" km depuis l'étape précédente"),
               ]),

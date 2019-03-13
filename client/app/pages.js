@@ -89,7 +89,7 @@ function protestModel( ){
       lat: lat,
       lng: lng,
       title: "",
-      datetime: "",
+      gather_at: new Date(),
       details: "",
       highlight:false,
       dist:0,
@@ -143,13 +143,14 @@ function protestModel( ){
     this.password = data.password || "";
     this.steps = [];
     var that = this;
-    data.steps.map(function(v){
+    (data.steps || []).map(function(v){
       that.steps.push({
           lat: v.lat,
           lng: v.lng,
           place: v.place,
           gather_at: v.gather_at,
           details: v.details,
+          dist: 0.0,
       })
     })
   }
@@ -486,7 +487,7 @@ var ViewPage = function(){
             m("label", {}, ""),
             txtF(pwdModel, "password", "Mot de passe", null, {}),
             m("button",{ onclick:checkPwd }, "soumettre")
-          ),
+          )
         )
       }
       return m("div", {class:"column page-view"}, [
@@ -503,7 +504,6 @@ var ViewPage = function(){
 
 var NoticePage = function(){
   var content  = document.getElementById("text-notice");
-  content.remove();
   return {
     view: function() {
       return m("div", {class:"column page-notice"}, m.trust(content.innerHTML))
@@ -552,7 +552,7 @@ var MinesPage = function(){
       var protests = m(ProtestsListComponent, {protests: model, onclick:onclick});
       return m("div", {class:"column page-mines"},
         model.length<1 ? null : protests,
-        model.length>0 ? null :emptyRes,
+        model.length>0 ? null :emptyRes
       )
     }
   }
@@ -651,7 +651,7 @@ var ContactPage = function(){
     view: function() {
       if (confirmed) {
         return m("div", {class:"column page-contact"},
-          m("h2", {class:"ok"}, "Votre demande de contact est enregistrée, merci!"),
+          m("h2", {class:"ok"}, "Votre demande de contact est enregistrée, merci!")
         )
       }
       var contactError = errorReader("contactmessageinput.contactmessage", errModel)
@@ -729,7 +729,7 @@ var AdminPage = function(){
       return m("div", {class:"column page-admin"},
         m("div", {}, "saisissez votre clef"),
         txtA(model, "key", "Clef", contactError, {}),
-        m("button", {class :"bt-save", onclick:login}, "connexion"),
+        m("button", {class :"bt-save", onclick:login}, "connexion")
       )
     },
   }
