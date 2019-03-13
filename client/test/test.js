@@ -478,6 +478,7 @@ describe('test monparcours contact', () => {
       .wait(".page-contact")
       .click(".page-contact .bt-save")
       .wait(".page-contact input[name=returnaddr].error")
+      .wait(".page-contact input[name=captchasolution].error")
       .end()
       .then(() => {
         done()
