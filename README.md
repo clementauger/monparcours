@@ -10,9 +10,11 @@ later they can share it, print it, save it...
 
 ### for development
 
+```sh
   go get -u github.com/clementauger/monparcours
   make install
   make run
+```
 
 the first command is the very classical go command
 to fetch a package.
@@ -26,14 +28,18 @@ the last command starts the server right away in development.
 
 until a packaged binary is provided, you will have to deal with raw source code.
 
+```sh
   go get -u github.com/clementauger/monparcours
   make install
   make build
   # (cd build; ./monparcours)
+```
 
 This will generate an archive under `build/`.
 
 Don t forget to adjust the configuration files (`app.yml` / `dbconfig.yml`) before deploying.
+
+See also the `samples/` directory for systemd definitions.
 
 ### other dependencies
 
@@ -94,7 +100,7 @@ When serving the app, you will have to deal with rate limiters, cors, some cachi
 
 Some are non configurable, by design, others should be adjusted.
 
-Check the configuration options in the `app.yml` and `dbconfig.yml` they both contain a `sample_env`
+Check the `samples/` directory to find configuration sample files.
 
 ### Working with the database
 
@@ -105,16 +111,19 @@ It is based on a well tested library `rubenv/sql-migrate`.
 
 Prepare a new migration with `migrate/m ${name}`, that will generate files under `migrations/{dialect}`.
 
-Use `migrateup/mu`, `migratedown/md` to consume the migrations.
+Use `migrateup/mu`, `migratedown/md` to consume the migrations, from the `Makefile`, `go run main.go` or the built binary.
 
 With `migratestatus/ms`, check the status of the migration and which are to be applied.
 
-Check the configuration options in the `app.yml` and `dbconfig.yml` they both contain a `sample_env`
+Check the `samples/` directory to find configuration sample files.
 
 ### Working with the frontend
 
-The frontend is a sinple page application,
+The frontend is a simple page application,
+
 the build is managed via the Makefile and the commands `buildassets` and `buildfront`.
+
+it handles auto reload and minification.
 
 ```sh
   make run # to start developing
