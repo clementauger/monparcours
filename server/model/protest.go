@@ -6,7 +6,7 @@ import (
 
 //Protest model
 type Protest struct {
-	ID          int64      `json:"id"`
+	ID          int64      `json:"id" sql:"oid"`
 	AuthorID    string     `json:"author_id"`
 	Title       string     `json:"title" validate:"required,max=60" conform:"text"`
 	Protest     string     `json:"protest" validate:"required,max=200" conform:"text"`
@@ -23,7 +23,7 @@ type Protest struct {
 
 //Step model
 type Step struct {
-	ID        int64     `json:"id"`
+	ID        int64     `json:"id" sql:"oid"`
 	ProtestID int64     `json:"protest_id"`
 	Place     string    `json:"place" validate:"required,max=200" conform:"text"`
 	Details   string    `json:"details" validate:"max=200" conform:"text"`
@@ -47,7 +47,7 @@ type StepService interface {
 	InsertAll(steps []Step) ([]Step, error)
 	Delete(p Step) error
 	Get(id int64) (Step, error)
-	GetAll(protestID int64) ([]Step, error)
+	GetByProtestID(protestID int64) ([]Step, error)
 	GetSteps(p Protest) (Protest, error)
 	GetProtectedSteps(p Protest) (Protest, error)
 	FindStepsAround(atDate time.Time, withinTime time.Duration, atLat, atLng float64) ([]Step, error)

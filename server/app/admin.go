@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/clementauger/httpr"
 	appconf "github.com/clementauger/monparcours/server/config/app"
 	"github.com/clementauger/st"
 	sth "github.com/clementauger/st/http"
@@ -13,27 +14,26 @@ import (
 )
 
 type authHandler struct {
-	http.Handler
-	Env appconf.Environment
+	next http.Handler
+	Env  appconf.Environment
 }
 
-func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (a authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) error {
 	iak, err := r.Cookie("iak")
 	if err != nil {
-		HandleHTTPError(w, AuthError{fmt.Errorf("failed to login")})
-		return
+		return AuthError{fmt.Errorf("failed to login")}
 	}
 	if !checkToken(a.Env, iak.Value, 0) && !checkToken(a.Env, iak.Value, time.Hour*24*-1) {
-		HandleHTTPError(w, AuthError{fmt.Errorf("failed to login")})
-		return
+		return AuthError{fmt.Errorf("failed to login")}
 	}
-	a.Handler.ServeHTTP(w, r)
+	a.next.ServeHTTP(w, r)
+	return nil
 }
 
 //Auth middleware to require logged user
-func Auth(env appconf.Environment) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return authHandler{Handler: h, Env: env}
+func Auth(env appconf.Environment) func(http.Handler) httpr.ErrHandler {
+	return func(h http.Handler) httpr.ErrHandler {
+		return authHandler{next: h, Env: env}
 	}
 }
 

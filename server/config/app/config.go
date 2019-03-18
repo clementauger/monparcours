@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/clementauger/coders"
+	"github.com/clementauger/httpr"
 )
 
 //Environment defines the execution options.
@@ -34,18 +35,11 @@ type Environment struct {
 	//Host to serve, it can a regexp as defiend by the gorilla framework.
 	Host string `yaml:"host"`
 	//GlobalRateLimit applies on all web (default 32 bytes random string)site and all requests.
-	GlobalRateLimit *RateLimit `yaml:"globalratelimit"`
+	GlobalRateLimit *httpr.RateLimit `yaml:"globalratelimit"`
 	//LoginRateLimit applies to the admin login.
-	LoginRateLimit *RateLimit `yaml:"loginratelimit"`
+	LoginRateLimit *httpr.RateLimit `yaml:"loginratelimit"`
 	//GeoCoderCacheSize defines the length of the LRU cache of osm requests.
 	GeoCoderCacheSize int `yaml:"geocodercachesize"`
-}
-
-//RateLimit configures http rate limiter.
-type RateLimit struct {
-	Size  int `yaml:"size"`
-	RPM   int `yaml:"rpm"`
-	Burst int `yaml:"burst"`
 }
 
 //GetEnvironment loads the config and applies default values.
@@ -78,14 +72,14 @@ func GetEnvironment(filename, environment string) (*Environment, error) {
 	}
 
 	if env.GlobalRateLimit == nil {
-		env.GlobalRateLimit = &RateLimit{
+		env.GlobalRateLimit = &httpr.RateLimit{
 			Burst: 5,
 			Size:  65536,
 			RPM:   20,
 		}
 	}
 	if env.LoginRateLimit == nil {
-		env.LoginRateLimit = &RateLimit{
+		env.LoginRateLimit = &httpr.RateLimit{
 			Burst: 1,
 			Size:  65536,
 			RPM:   10,

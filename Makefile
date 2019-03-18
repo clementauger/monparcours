@@ -128,11 +128,20 @@ migratedown:
 # testing
 test:
 	GO_ENV=test_sqlite make test_
+	
+test_all:
+	GO_ENV=test_sqlite make test_
+	make mysql
+	GO_ENV=test_mysql make test_
+	make pgsql
+	GO_ENV=test_pg make test_
+
 test_:
 	make build
 	mkdir build/data
 	touch build/data/monparcours.db
 	(cd build; ./monparcours hello)
+	(cd build; ./monparcours md -limit 10000)
 	(cd build; ./monparcours mu -limit 10000)
 	$(eval AKEY := $(shell build/monparcours getkey))
 	(cd build; ./monparcours -quiet &)

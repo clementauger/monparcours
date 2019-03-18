@@ -6,7 +6,7 @@ import (
 
 //ContactMessage model
 type ContactMessage struct {
-	ID         int64      `json:"id"`
+	ID         int64      `json:"id" sql:"oid"`
 	ReturnAddr string     `json:"returnaddr" validate:"required,max=60" conform:"text"`
 	Subject    string     `json:"subject" validate:"required,max=60" conform:"text"`
 	Body       string     `json:"body" validate:"required,max=200" conform:"text"`

@@ -17,8 +17,7 @@ create table IF NOT EXISTS step (
    details TEXT,
    gather_at DATETIME,
    lat DECIMAL(10,8),
-   lng DECIMAL(11,8),
-   FOREIGN KEY protest_has_steps (protest_id) REFERENCES protest (`oid`) ON DELETE CASCADE
+   lng DECIMAL(11,8)
 );
 
 -- +migrate Down

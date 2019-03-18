@@ -8,8 +8,22 @@ import (
 	"strings"
 
 	"github.com/clementauger/monparcours/server/env"
+	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 )
+
+type causer interface {
+	Cause() error
+}
+
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
+
+//SqlError discriminates errors kind.
+type SqlError interface {
+	Sql() string
+}
 
 //UserError discriminates errors kind.
 type UserError interface {
@@ -51,28 +65,40 @@ func (v ValidationError) Error() string {
 	return fmt.Sprintf("%s", x)
 }
 
-//HandleHTTPError writes err content on w
-// if it is an UserError, it responds with a StatusBadRequest code,
-// if err is non nil, and the environement is not production, it responds with an StatusInternalServerError code,
-// otherwise it writes a dummy message with a response code StatusInternalServerError,
-// and writes the error to stderr.
-func HandleHTTPError(w http.ResponseWriter, err error) error {
-	if err == nil {
-		return nil
-	}
+func HandleValidationError(w http.ResponseWriter, err error) error {
 	if x, ok := err.(validator.ValidationErrors); ok {
 		http.Error(w, ValidationError{errs: x}.Error(), http.StatusBadRequest)
 		return nil
 
-	} else if _, ok := err.(UserError); ok {
+	}
+	return err
+}
+func HandleUserError(w http.ResponseWriter, err error) error {
+	if _, ok := err.(UserError); ok {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil
 
-	} else if !env.IsProd() {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
 	}
-	http.Error(w, "unrecoverable error", http.StatusInternalServerError)
 	return err
+}
+func HandleOtherErrors(w http.ResponseWriter, err error) error {
+	httpMsg := err.Error()
+	if env.IsProd() {
+		httpMsg = "unrecoverable error"
+	}
+	longErr := httpMsg
+	switch x := errors.Cause(err).(type) {
+	case SqlError:
+		longErr = fmt.Sprintf("%v\n%v", x.Sql(), httpMsg)
+	default:
+	}
+	if err, ok := err.(stackTracer); ok {
+		longErr += fmt.Sprintln()
+		for _, f := range err.StackTrace() {
+			longErr += fmt.Sprintf("%+s:%d\n", f, f)
+		}
+	}
+	log.Println(longErr)
+	http.Error(w, httpMsg, http.StatusInternalServerError)
+	return nil
 }

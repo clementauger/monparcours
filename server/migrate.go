@@ -19,7 +19,7 @@ var (
 	statikBox = packr.NewBox("../migrations")
 )
 
-func withDB(f func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource)) {
+func withDB(f func(db *sql.DB, stage, dialect string, env *dbconf.Environment)) {
 
 	stage := env.Stage()
 
@@ -41,21 +41,25 @@ func withDB(f func(db *sql.DB, stage, dialect string, env *dbconf.Environment, b
 		migrate.SetSchema(env.SchemaName)
 	}
 
+	f(conn, stage, dialect, env)
+}
+
+func getBox(statik bool, dialect string) migrate.MigrationSource {
 	var box migrate.MigrationSource = migrate.FileMigrationSource{
 		Dir: filepath.Join("migrations", dialect),
 	}
-	if env.Statik {
+	if statik {
 		box = &migrate.PackrMigrationSource{
 			Box: statikBox,
 			Dir: dialect,
 		}
 	}
-	f(conn, stage, dialect, env, box)
+	return box
 }
 
 //Hello tests the db connection
 func Hello(ctx context.Context) {
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 		err := db.Ping()
 		if err != nil {
 			log.Fatalf("Could not ping using %q: %s", stage, err)
@@ -66,79 +70,87 @@ func Hello(ctx context.Context) {
 
 //MigrateNow creates new migration
 func MigrateNow(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var dryrun bool
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
-	name := flag.Arg(flag.NArg() - 1)
+		env.Statik = false
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateNow(ctx, name)
+		var dryrun bool
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.Parse()
+		name := flag.Arg(flag.NArg() - 1)
+
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateNow(ctx, name)
 	})
 }
 
 //MigrateUp applies migration.
 func MigrateUp(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var limit int
-	var dryrun bool
-	flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
+		var limit int
+		var dryrun bool
+		flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.Parse()
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateUp(ctx, limit)
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateUp(ctx, limit)
 	})
 }
 
 //MigrateDown uninstalls migrations
 func MigrateDown(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var limit int
-	var dryrun bool
-	flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
+		var limit int
+		var dryrun bool
+		flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.Parse()
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateDown(ctx, limit)
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateDown(ctx, limit)
 	})
 }
 
 //MigrateSkip skips migrations
 func MigrateSkip(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var limit int
-	var dryrun bool
-	flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
+		var limit int
+		var dryrun bool
+		flag.IntVar(&limit, "limit", 1, "Max number of migrations to apply.")
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.Parse()
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateSkip(ctx, limit)
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateSkip(ctx, limit)
 	})
 }
 
 // MigrateRedo checks migrations
 func MigrateRedo(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var dryrun bool
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
+		var dryrun bool
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.Parse()
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateRedo(ctx)
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateRedo(ctx)
 	})
 }
 
 //MigrateStatus displays migrations statuses
 func MigrateStatus(ctx context.Context) {
+	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment) {
 
-	var dryrun bool
-	flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
-	flag.Parse()
+		var dryrun bool
+		flag.BoolVar(&dryrun, "dryrun", false, "Don't apply migrations, just print them.")
+		flag.BoolVar(&env.Statik, "statik", env.Statik, "Use statik assets or not.")
+		flag.Parse()
 
-	withDB(func(db *sql.DB, stage, dialect string, env *dbconf.Environment, box migrate.MigrationSource) {
-		migrate.NewMigrator(db, dialect, box).DryRun(dryrun).MigrateStatus(ctx)
+		migrate.NewMigrator(db, dialect, getBox(env.Statik, dialect)).DryRun(dryrun).MigrateStatus(ctx)
 	})
 }

@@ -1,4 +1,4 @@
-package model
+package mysql
 
 import (
 	"database/sql"
@@ -414,8 +414,8 @@ func (s StepService) Get(id int64) (model.Step, error) {
 	return p, rows.Err()
 }
 
-//GetAll steps by theirs protest IDs.
-func (s StepService) GetAll(protestID int64) ([]model.Step, error) {
+//GetByProtestID steps by theirs protest IDs.
+func (s StepService) GetByProtestID(protestID int64) ([]model.Step, error) {
 	out := []model.Step{}
 	stmt := `SELECT
 		oid, place, details, gather_at, lat, lng
@@ -445,7 +445,7 @@ func (s StepService) GetAll(protestID int64) ([]model.Step, error) {
 func (s StepService) GetSteps(p model.Protest) (model.Protest, error) {
 	var err error
 	if p.Public {
-		p.Steps, err = s.GetAll(p.ID)
+		p.Steps, err = s.GetByProtestID(p.ID)
 	}
 	return p, err
 }
@@ -454,7 +454,7 @@ func (s StepService) GetSteps(p model.Protest) (model.Protest, error) {
 func (s StepService) GetProtectedSteps(p model.Protest) (model.Protest, error) {
 	var err error
 	if !p.Public {
-		p.Steps, err = s.GetAll(p.ID)
+		p.Steps, err = s.GetByProtestID(p.ID)
 	}
 	return p, err
 }

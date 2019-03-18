@@ -390,7 +390,7 @@ describe('test monparcours create', () => {
 
 describe('test monparcours mines', () => {
 
-  it('should display the correct number of protests', function(done) {
+  it('should display the²otests', function(done) {
     this.timeout('10s')
 
     var nightmare = nm()
@@ -400,6 +400,7 @@ describe('test monparcours mines', () => {
       .click(".page-create .bt-save")
       .wait(".page-view")
       .click(".menu dl dt:nth-child(3) a")
+      .wait(250)
       .wait(".page-mines")
       .evaluate(() => document.querySelectorAll(".page-mines table tr").length)
       .end()

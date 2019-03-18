@@ -10,9 +10,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/clementauger/httpr"
 	myapp "github.com/clementauger/monparcours/server/app"
 	"github.com/clementauger/monparcours/server/env"
-	"github.com/clementauger/monparcours/server/service"
+	"github.com/clementauger/monparcours/server/model/service"
 	"github.com/gobuffalo/packr"
 	"github.com/gocraft/health"
 
@@ -50,11 +51,13 @@ func ServeHTTP(ctx context.Context) {
 	}
 	appConfig := app.Env
 
-	r := &myapp.Router{
-		Stream:       stream,
-		Router:       mux.NewRouter(),
-		ErrorHandler: myapp.HandleHTTPError,
-	}
+	errHandler := httpr.MakeHTTPErrorHandler(
+		myapp.HandleValidationError,
+		myapp.HandleUserError,
+		myapp.HandleOtherErrors,
+	)
+
+	r := httpr.New(mux.NewRouter(), stream, errHandler)
 
 	if appConfig.Host != "" {
 		r = r.Host(appConfig.Host).Subrouter()
@@ -72,12 +75,14 @@ func ServeHTTP(ctx context.Context) {
 
 	r.HandleFunc("/contacts/create", app.CreateContactMessage).Methods("POST")
 
+	r.HandleFunc("/rgpd", app.RGPD).Methods("GET")
+
 	verylimited := r.PathPrefix("/").Subrouter()
-	verylimited.Use(myapp.GlobalRateLimiter(appConfig, 65536, 60, 0))
-	r.HandleFunc("/geocode/search", myapp.Geocode(appConfig.GeoCoderCacheSize)).Methods("GET")
+	verylimited.Use(httpr.GlobalRateLimiter(65536, 60, 0))
+	verylimited.HandleFunc("/geocode/search", myapp.Geocode(appConfig.GeoCoderCacheSize)).Methods("GET")
 
 	veryprotected := r.PathPrefix("/").Subrouter()
-	veryprotected.Use(myapp.RateLimiter(*appConfig.LoginRateLimit))
+	veryprotected.Use(httpr.RateLimiter(*appConfig.LoginRateLimit))
 	veryprotected.HandleFunc("/admin/login", app.AdminLogin).Methods("POST")
 
 	protected := r.PathPrefix("/").Subrouter()
@@ -85,17 +90,15 @@ func ServeHTTP(ctx context.Context) {
 	protected.HandleFunc("/contacts/delete/{id}", app.DeleteContactMessage).Methods("POST")
 	protected.HandleFunc("/contacts/list", app.ListContactMessages).Methods("GET")
 
-	r.HandleFunc("/rgpd", app.RGPD).Methods("GET")
-
 	{
 		var fileSystem http.FileSystem = http.Dir("client/public")
 		if appConfig.Statik {
 			fileSystem = packr.NewBox("../client/public")
 		}
 		handler := http.FileServer(fileSystem)
-		handler = myapp.InsertBefore(handler, "/", []byte("</body>"), myapp.CsrfToken)
+		handler = httpr.InsertBefore(handler, "/", []byte("</body>"), httpr.CsrfToken)
 		if !env.IsProd() {
-			handler = myapp.InsertAfter(handler, "/", []byte("<head>"), myapp.JSErrorAlert)
+			handler = httpr.InsertAfter(handler, "/", []byte("<head>"), httpr.JSErrorAlert)
 		}
 		handler = handlers.CompressHandler(handler)
 		r.PathPrefix("/").Handler(handler)
@@ -103,17 +106,17 @@ func ServeHTTP(ctx context.Context) {
 
 	canonicalhost := appConfig.CanonicalHost
 
-	r.Use(myapp.Csrf(appConfig))
+	r.Use(httpr.Csrf(appConfig.CsrfKey))
 	var httpHandler http.Handler = r
 	httpHandler = handlers.ContentTypeHandler(httpHandler, "application/json", "multipart/form-data")
 	httpHandler = handlers.CORS()(httpHandler)
 	if canonicalhost != "" {
 		httpHandler = handlers.CanonicalHost(canonicalhost, 302)(httpHandler)
 	}
-	httpHandler = myapp.RateLimiter(*appConfig.GlobalRateLimit)(httpHandler)
+	httpHandler = httpr.RateLimiter(*appConfig.GlobalRateLimit)(httpHandler)
 
 	if *quiet == false {
-		httpHandler = myapp.HTPPLog()(httpHandler)
+		httpHandler = httpr.HTPPLog()(httpHandler)
 	}
 
 	log.Println("Stage is ", stage)

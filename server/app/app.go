@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	appconf "github.com/clementauger/monparcours/server/config/app"
-	"github.com/clementauger/monparcours/server/service"
+	"github.com/clementauger/monparcours/server/model/service"
 	"github.com/leebenson/conform"
 	validator "gopkg.in/go-playground/validator.v9"
 )

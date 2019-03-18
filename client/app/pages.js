@@ -1,5 +1,5 @@
 
-var ftomate = document.getElementsByName("ftomate")[0].value;
+var csrfkey = document.getElementsByName("csrfkey")[0].value;
 
 function errorReader(prefix, model) {
   return function () {
@@ -171,7 +171,7 @@ var myAPI = {
         url: "/protests/create",
         data: data,
         withCredentials: true,
-        headers: { "X-tomate": ftomate }
+        headers: { "X-csrfkey": csrfkey }
       })
       .then(resolve)
       .catch(function(e){
@@ -185,7 +185,7 @@ var myAPI = {
       m.request({
         method: "GET",
         url: "/protests/"+id,
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
       })
       .then(resolve)
       .catch(function(e){
@@ -200,7 +200,7 @@ var myAPI = {
         method: "POST",
         url: "/protests/"+id,
         data: {pwd: password},
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
       })
       .then(resolve)
       .catch(function(e){
@@ -227,7 +227,7 @@ var myAPI = {
       m.request({
         method: "POST",
         url: "/protests/search",
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
         data: data
       })
       .then(resolve)
@@ -242,7 +242,7 @@ var myAPI = {
       m.request({
         method: "POST",
         url: "/admin/login",
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
         data: model,
       })
       .then(resolve)
@@ -256,7 +256,7 @@ var myAPI = {
     return new Promise(function(resolve, reject) {
       m.request({
         url: "/captcha/new",
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
       })
       .then(resolve)
       .catch(function(e){
@@ -270,7 +270,7 @@ var myAPI = {
       m.request({
         method: "POST",
         url: "/contacts/create",
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
         data: data,
       })
       .then(resolve)
@@ -285,7 +285,7 @@ var myAPI = {
       m.request({
         method: "GET",
         url: "/contacts/list",
-        headers: { "X-tomate": ftomate },
+        headers: { "X-csrfkey": csrfkey },
       })
       .then(resolve)
       .catch(function(e){
@@ -299,7 +299,7 @@ var myAPI = {
       m.request({
         method: "POST",
         url: "/contacts/delete/"+id,
-        headers: { "X-tomate": ftomate }
+        headers: { "X-csrfkey": csrfkey }
       })
       .then(resolve)
       .catch(function(e){

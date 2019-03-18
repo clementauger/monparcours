@@ -12,12 +12,12 @@ create table IF NOT EXISTS protest (
 );
 create table IF NOT EXISTS step (
    oid  SERIAL PRIMARY KEY,
-   protest_id INTEGER REFERENCES protest(oid),
+   protest_id INTEGER,
    place TEXT,
    details TEXT,
    gather_at timestamp,
-   lat DECIMAL(10,8),
-   lng DECIMAL(11,8)
+   lat NUMERIC(10,8),
+   lng NUMERIC(11,8)
 );
 
 -- +migrate Down

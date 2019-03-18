@@ -2,18 +2,14 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"os/signal"
-	"sort"
-	"strings"
 
 	_ "expvar"
 	_ "net/http/pprof"
 
+	"github.com/clementauger/commander"
 	"github.com/clementauger/monparcours/server"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -25,138 +21,44 @@ var (
 	Tag     = "0.0.0"
 	Version = "dev"
 	Appname = "monparcours"
-	actions = map[string]func(context.Context){
-		"hello":         server.Hello,
-		"migrate":       server.MigrateNow,
-		"migrateup":     server.MigrateUp,
-		"migratedown":   server.MigrateDown,
-		"migrateredo":   server.MigrateRedo,
-		"migrateskip":   server.MigrateSkip,
-		"migratestatus": server.MigrateStatus,
-		"getkey":        server.Getkey,
-		"serve":         server.ServeHTTP,
-		"help":          help,
-	}
-	descriptions = map[string]string{
-		"hello":         `test db connection`,
-		"migrate":       `create a new named migration.`,
-		"migrateup":     `apply migrations`,
-		"migratedown":   `revert migrations`,
-		"migrateredo":   `redo last migration`,
-		"migrateskip":   `skip next migration`,
-		"migratestatus": `show migrations status`,
-		"getkey":        `show admin key`,
-		"serve":         `serve http application`,
-		"help":          `show help`,
-	}
-	aliases = map[string]string{
-		"migrate":       `m`,
-		"migrateup":     `mu`,
-		"migratedown":   `md`,
-		"migrateredo":   `mr`,
-		"migrateskip":   `mk`,
-		"migratestatus": `ms`,
-		"getkey":        `g`,
-		"serve":         `s`,
-		"help":          `-h --help`,
-	}
-	opts = map[string]string{
-		"migrate": `[name]`,
-	}
-	action = "serve"
-	banner = fmt.Sprintf(`%v %v %v`, Appname, Version, Tag)
+	banner  = fmt.Sprintf(`%v %v %v`, Appname, Version, Tag)
 )
 
 func main() {
+	cmder := commander.New(banner, Appname)
 
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	cmder.Add("serve", server.ServeHTTP).
+		Alias("s").Description(`serve http application`)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go onSignal(os.Interrupt, cancel)
+	cmder.Add("hello", server.Hello).
+		Alias("").Description(`print and test configuration`)
 
-	a := action
-	if len(os.Args) > 1 {
-		a = os.Args[1]
-	}
+	cmder.Add("getkey", server.Getkey).
+		Alias("g").Description(`show admin key`)
 
-	for c, alias := range aliases {
-		alias = " " + alias + " "
-		if strings.Index(alias, " "+a+" ") > -1 {
-			a = c
-			break
-		}
-	}
-	if _, ok := actions[a]; !ok {
-		if !strings.HasPrefix(a, "-") {
-			help(nil)
-			fmt.Println()
-			fmt.Println("unknown command ", a)
-			fmt.Println()
-			os.Exit(2)
-		}
-		a = action
-	} else if len(os.Args) > 1 {
-		os.Args = append(os.Args[:1], os.Args[2:]...)
-	}
+	cmder.Add("migrate", server.MigrateNow).
+		Alias("m").Description(`create a new named migration`)
 
-	flag.Usage = func() {
-		d, _ := descriptions[a]
-		t, _ := aliases[a]
-		c, _ := opts[a]
-		t = strings.Replace(t, " ", "|", -1)
-		if t != "" {
-			t = "|" + t
-		}
-		w := flag.CommandLine.Output()
-		fmt.Fprintln(w, banner)
-		fmt.Fprintln(w, "")
-		fmt.Fprintf(w, `  %v
-`, a+t+" "+c)
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "  "+d)
-		fmt.Fprintln(w, "")
-		flag.PrintDefaults()
-	}
+	cmder.Add("migratestatus", server.MigrateStatus).
+		Alias("ms").Description(`show migrations status`)
 
-	if fn, ok := actions[a]; ok {
-		fn(ctx)
-	}
-}
+	cmder.Add("migrateskip", server.MigrateSkip).
+		Alias("mk").Description(`skip next migration`)
 
-var h string
+	cmder.Add("migrateup", server.MigrateUp).
+		Alias("mu").Description(`apply migrations`)
 
-func init() {
-	h = fmt.Sprintf(`%v
+	cmder.Add("migratedown", server.MigrateDown).
+		Alias("md").Description(`revert migrations`)
 
- usage
-    %v [action] args...
-    %v args...
+	cmder.Add("migrateredo", server.MigrateRedo).
+		Alias("mr").Description(`redo last migration`)
 
- actions
-`, banner, Appname, Appname)
-	keys := []string{}
-	for a := range actions {
-		keys = append(keys, a)
-	}
-	sort.Strings(keys)
-	for _, a := range keys {
-		d, _ := descriptions[a]
-		t, _ := aliases[a]
-		c, _ := opts[a]
-		t = strings.Replace(t, " ", "|", -1)
-		if t != "" {
-			t = "|" + t
-		}
-		h += fmt.Sprintf(`    %v
-	%v
-`, a+t+" "+c, d)
-	}
-}
-func help(ctx context.Context) {
-	fmt.Print(h)
+	cmder.Add("help", nil).
+		Alias("-h --help -help").Description(`show help`)
+
+	cmder.MustRun(context.Background())
+
 }
 
 //todo: report to golang. want improved error message that includes the expected format.
